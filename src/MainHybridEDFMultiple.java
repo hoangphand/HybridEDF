@@ -33,10 +33,13 @@ public class MainHybridEDFMultiple extends JFrame {
             // calculate priority of new DAG's tasks
             LinkedList<Task> newTaskPriority = MainHybridEDFMultiple.prioritizeTasks(taskDAG, processorDAG);
 
+            // after having calculated all the tasks
             for (int i = 0; i < newTaskPriority.size(); i++) {
                 queueOfTasks.add(newTaskPriority.get(i));
             }
 
+            // loop through all slots on each processor core and temporarily remove all the tasks that are
+            // scheduled to be executed after current time
             for (int procesorCoreIndex = 0; procesorCoreIndex < processorDAG.getTotalNumberOfCores(); procesorCoreIndex++) {
                 ArrayList<Slot> currentProcessorSlots = schedule.getProcessorCoreExecutionSlots().get(procesorCoreIndex);
                 int noOfSlots = currentProcessorSlots.size();
@@ -54,18 +57,24 @@ public class MainHybridEDFMultiple extends JFrame {
                 }
             }
 
+            // sort all the tasks that still remain in the queue based on job's deadline and task priority
             Task.sortByDeadlinePriority(queueOfTasks);
 
             Iterator<Task> iterator = queueOfTasks.iterator();
             while (iterator.hasNext()) {
+                // get rid of all the tasks whose job's deadline are before current time
                 if (iterator.next().getTaskDAG().getDeadline() < currentTime) {
                     iterator.remove();
                 }
             }
 
-            for (int taskIndex = 0; taskIndex < queueOfTasks.size())
+//            for (int taskIndex = 0; taskIndex < queueOfTasks.size())
 
-//            Task entryTask = queueOfTasks.removeLast();
+            while (queueOfTasks.size() > 0) {
+                Task currentTask = 
+            }
+
+            Task entryTask = queueOfTasks.removeLast();
         }
     }
 
