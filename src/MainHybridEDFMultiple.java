@@ -39,11 +39,23 @@ public class MainHybridEDFMultiple extends JFrame {
             }
 
             // loop through all slots on each processor core and temporarily remove all the tasks that are
-            // scheduled to be executed after current time
+            // scheduled to be executed after current time from the schedule and move them to the queue
             for (int procesorCoreIndex = 0; procesorCoreIndex < processorDAG.getTotalNumberOfCores(); procesorCoreIndex++) {
                 ArrayList<Slot> currentProcessorSlots = schedule.getProcessorCoreExecutionSlots().get(procesorCoreIndex);
                 int noOfSlots = currentProcessorSlots.size();
 
+                Iterator<Slot> iterator = currentProcessorSlots.iterator();
+                while (iterator.hasNext()) {
+                    Slot currentSlot = iterator.next();
+
+                    if (currentSlot.getStartTime() > currentTime) {
+                        Task removedTask = currentSlot.getTask();
+                        removedTask.setAllocatedSlot(null);
+                        queueOfTasks.add(removedTask);
+
+                        schedule.removeSlot(procesorCoreIndex, slotIndex);
+                    }
+                }
                 for (int slotIndex = 0; slotIndex < noOfSlots; slotIndex++) {
                     Slot currentSlot = currentProcessorSlots.get(slotIndex);
 
@@ -71,7 +83,7 @@ public class MainHybridEDFMultiple extends JFrame {
 //            for (int taskIndex = 0; taskIndex < queueOfTasks.size())
 
             while (queueOfTasks.size() > 0) {
-                Task currentTask = 
+                Task currentTask =
             }
 
             Task entryTask = queueOfTasks.removeLast();
