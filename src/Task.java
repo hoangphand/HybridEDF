@@ -234,7 +234,8 @@ public class Task {
             double deadline2 = task2.taskDAG.getDeadline() + task2.taskDAG.getArrivalTime();
 
             if (deadline1 != deadline2) {
-                return Double.compare(deadline1, deadline2);
+                return Double.compare(deadline2, deadline1);
+//                return Double.compare(deadline1, deadline2);
             }
 
             return Double.compare(task1.getPriority(), task2.getPriority());

@@ -17,6 +17,10 @@ public class Slot implements Comparable<Slot> {
         return this.task;
     }
 
+    public void setTask(Task task) {
+        this.task = task;
+    }
+
     public Processor getProcessor() {
         return this.processorCore.getProcessor();
     }
@@ -29,8 +33,16 @@ public class Slot implements Comparable<Slot> {
         return this.startTime;
     }
 
+    public void setStartTime(double startTime) {
+        this.startTime = startTime;
+    }
+
     public double getEndTime() {
         return this.endTime;
+    }
+
+    public void setEndTime(double endTime) {
+        this.endTime = endTime;
     }
 
     public int compareTo(Slot other) {
