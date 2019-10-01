@@ -14,7 +14,7 @@ public class MainHybridEDFMultiple extends JFrame {
     }
 
     public static void main(String[] args) {
-        int noOfDAGsToTest = 4;
+        int noOfDAGsToTest = 8;
 //        int noOfDAGsToTest = GlobalConfig.DATASET_SIZE;
         LinkedList<TaskDAG> listOfDags = new LinkedList<TaskDAG>();
         LinkedList<Task> queueOfTasks = new LinkedList<Task>();
@@ -31,7 +31,7 @@ public class MainHybridEDFMultiple extends JFrame {
         for (int dagIndex = 1; dagIndex <= noOfDAGsToTest; dagIndex++) {
             TaskDAG taskDAG = new TaskDAG(dagIndex, GlobalConfig.DATASET_PATH + dagIndex + ".dag");
             currentTime = taskDAG.getArrivalTime();
-            System.out.println("current time: " + currentTime);
+//            System.out.println("current time: " + currentTime);
 
             listOfDags.add(taskDAG);
 
@@ -150,9 +150,23 @@ public class MainHybridEDFMultiple extends JFrame {
             TaskDAG currentTaskDag = listOfDags.get(i);
 
             if (currentTaskDag.getTasks().get(currentTaskDag.getTasks().size() - 1).getAllocatedSlot() == null) {
-                System.out.println(String.valueOf(i + 1) + ": Rejected");
+                int noOfTasksExecuted = 0;
+
+                for (int j = 0; j < currentTaskDag.getTasks().size(); j++) {
+                    if (currentTaskDag.getTasks().get(j).getAllocatedSlot() != null) {
+                        noOfTasksExecuted++;
+                    }
+                }
+
+                System.out.println(String.valueOf(i + 1) + ": Rejected. Arrived at: " + currentTaskDag.getArrivalTime() +
+                        ". No of tasks executed: " + noOfTasksExecuted +
+                        "/" + currentTaskDag.getTasks().size());
             } else {
-                System.out.println(String.valueOf(i + 1) + ": Accepted");
+                Slot slotForExitTask = currentTaskDag.getTasks().get(currentTaskDag.getTasks().size() - 1).getAllocatedSlot();
+                double makespan = slotForExitTask.getEndTime() - currentTaskDag.getArrivalTime();
+                System.out.println(String.valueOf(i + 1) + ": Accepted. Arrived at: " +
+                        currentTaskDag.getArrivalTime() + " Makespan: " + makespan +
+                        ", deadline: " + currentTaskDag.getDeadline());
             }
         }
 
