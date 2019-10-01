@@ -14,7 +14,7 @@ public class MainHybridEDFMultiple extends JFrame {
     }
 
     public static void main(String[] args) {
-        int noOfDAGsToTest = 8;
+        int noOfDAGsToTest = 10;
 //        int noOfDAGsToTest = GlobalConfig.DATASET_SIZE;
         LinkedList<TaskDAG> listOfDags = new LinkedList<TaskDAG>();
         LinkedList<Task> queueOfTasks = new LinkedList<Task>();
@@ -92,7 +92,8 @@ public class MainHybridEDFMultiple extends JFrame {
             Iterator<Task> iterator = queueOfTasks.iterator();
             while (iterator.hasNext()) {
                 // get rid of all the tasks whose job's deadline are before current time
-                if (iterator.next().getTaskDAG().getDeadline() < currentTime) {
+                TaskDAG currentTaskDag = iterator.next().getTaskDAG();
+                if (currentTaskDag.getDeadline() + currentTaskDag.getArrivalTime() < currentTime) {
                     iterator.remove();
                     countNoRemovedTasks++;
                 }
