@@ -99,27 +99,11 @@ public class MainHybridEDFMultiple extends JFrame {
                 }
             }
 
-            // what is in the queue
-//            System.out.println("DAG " + taskDAG.getId());
-//            for (int i = queueOfTasks.size() - 1; i >= 0; i--) {
-//                Task currentTask = queueOfTasks.get(i);
-//                TaskDAG currentDag = currentTask.getTaskDAG();
-//
-//                System.out.println("DAG: " + currentDag.getId() +
-//                        ", task: " + currentTask.getId() +
-//                        ", deadline: " + (currentDag.getDeadline() + currentDag.getArrivalTime()) +
-//                        ", priority: " + currentTask.getPriority());
-//            }
-
             // scheduling
 //            boolean isNewRound = true;
             while (queueOfTasks.size() > 0) {
                 Task currentTask = queueOfTasks.removeLast();
 
-//                if (isNewRound) {
-//                    System.out.println("DAG Id: " + taskDAG.getId() + ", top task Id: " + currentTask.getId());
-//                    isNewRound = false;
-//                }
                 if (currentTask.getId() == 0) {
                     TaskDAG currentDag = currentTask.getTaskDAG();
                     ProcessorCore selectedProcessorCore = schedule.getFirstProcessorCoreFreeAt(currentDag.getArrivalTime());
@@ -131,6 +115,18 @@ public class MainHybridEDFMultiple extends JFrame {
 
                     for (int i = 0; i < schedule.getProcessorCoreExecutionSlots().size(); i++) {
                         ProcessorCore currentProcessorCore = schedule.getProcessorCoreExecutionSlots().get(i).get(0).getProcessorCore();
+
+                        if (currentTask.getTaskDAG().getCCR() > 1) {
+                            // communication intensive
+                            if (!currentProcessorCore.getProcessor().isFog()) {
+                                continue;
+                            }
+                        } else {
+                            // computation intensive
+                            if (currentProcessorCore.getProcessor().isFog()) {
+                                continue;
+                            }
+                        }
                         // find the first fit slot on the current processor core for the current task
                         Slot currentSelectedSlot = schedule.getFirstFitSlotForTaskOnProcessorCore(currentProcessorCore, currentTask);
 
@@ -147,8 +143,11 @@ public class MainHybridEDFMultiple extends JFrame {
 
         System.out.println(countNoRemovedTasks);
 
+        int noOfAcceptedDags = 0;
+        int totalNoOfTasks = 0;
         for (int i = 0; i < noOfDAGsToTest; i++) {
             TaskDAG currentTaskDag = listOfDags.get(i);
+            totalNoOfTasks += currentTaskDag.getTasks().size();
 
             if (currentTaskDag.getTasks().get(currentTaskDag.getTasks().size() - 1).getAllocatedSlot() == null) {
                 int noOfTasksExecuted = 0;
@@ -170,6 +169,9 @@ public class MainHybridEDFMultiple extends JFrame {
                         ", deadline: " + currentTaskDag.getDeadline());
             }
         }
+
+        System.out.println("No of occupied slots: " + schedule.countOccupiedSlotsInNetwork());
+        System.out.println("Total no of tasks: " + totalNoOfTasks);
 
         SwingUtilities.invokeLater(() -> {
             MainHybridEDFMultiple example = new MainHybridEDFMultiple(

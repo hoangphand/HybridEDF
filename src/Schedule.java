@@ -215,6 +215,20 @@ public class Schedule {
         return count;
     }
 
+    public int countOccupiedSlotsInNetwork() {
+        int count = 0;
+
+        for (int i = 0; i < this.processorCoreExecutionSlots.size(); i++) {
+            for (int j = 0; j < this.processorCoreExecutionSlots.get(i).size(); j++) {
+                if (this.processorCoreExecutionSlots.get(i).get(j).getTask() != null) {
+                    count += 1;
+                }
+            }
+        }
+
+        return count;
+    }
+
     public void setAFT(double aft) {
         this.aft = aft;
     }
