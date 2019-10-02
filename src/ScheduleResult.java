@@ -21,20 +21,20 @@ public class ScheduleResult {
     public ScheduleResult(Schedule schedule) {
         this.schedule = schedule;
         this.taskDAG = schedule.getTaskDAG();
-        this.ast = schedule.getAST();
-        this.aft = schedule.getAFT();
+//        this.ast = schedule.getAST();
+//        this.aft = schedule.getAFT();
 //        this.makespan = schedule.getAFT() - schedule.getAST();
-        this.responseTime = schedule.getAFT() - schedule.getTaskDAG().getArrivalTime();
-        this.makespan = schedule.getAFT() - schedule.getActualStartTimeOfDAG();
+//        this.responseTime = schedule.getAFT() - schedule.getTaskDAG().getArrivalTime();
+//        this.makespan = schedule.getAFT() - schedule.getActualStartTimeOfDAG();
         this.noOfSlots = schedule.countSlotsInNetwork();
 
-        if (this.responseTime <= this.taskDAG.getDeadline()) {
-            this.isAccepted = true;
-            this.earlyTime = this.taskDAG.getDeadline() - this.makespan;
-        } else {
-            this.isAccepted = false;
-            this.lateTime = this.makespan - this.taskDAG.getDeadline();
-        }
+//        if (this.responseTime <= this.taskDAG.getDeadline()) {
+//            this.isAccepted = true;
+//            this.earlyTime = this.taskDAG.getDeadline() - this.makespan;
+//        } else {
+//            this.isAccepted = false;
+//            this.lateTime = this.makespan - this.taskDAG.getDeadline();
+//        }
 
 
     }
@@ -77,6 +77,24 @@ public class ScheduleResult {
     }
 
     public double getCloudCost() {
+        this.cloudCost = 0;
+
+        for (int i = 0; i < schedule.getProcessorCoreExecutionSlots().size(); i++) {
+            Processor currentProcessor = schedule.getProcessorCoreExecutionSlots().get(i).get(0).getProcessor();
+
+            if (!currentProcessor.isFog()) {
+                for (int j = 0; j < schedule.getProcessorCoreExecutionSlots().get(i).size(); j++) {
+                    Slot currentSlot = schedule.getProcessorCoreExecutionSlots().get(i).get(j);
+
+                    if (currentSlot.getTask() != null) {
+                        double occupancyPeriod = currentSlot.getEndTime() - currentSlot.getStartTime();
+
+                        this.cloudCost += occupancyPeriod * currentProcessor.getCostPerTimeUnit();
+                    }
+                }
+            }
+        }
+
         return (double)Math.round(this.cloudCost * 100d) / 100d;
     }
 

@@ -14,11 +14,12 @@ public class MainHybridEDFMultiple extends JFrame {
     }
 
     public static void main(String[] args) {
-        int noOfDAGsToTest = 10;
-//        int noOfDAGsToTest = GlobalConfig.DATASET_SIZE;
+//        int noOfDAGsToTest = 100;
+        int noOfDAGsToTest = GlobalConfig.DATASET_SIZE;
         LinkedList<TaskDAG> listOfDags = new LinkedList<TaskDAG>();
         LinkedList<Task> queueOfTasks = new LinkedList<Task>();
-        
+        LinkedList<Task> listOfTempRemovedTasks = new LinkedList<Task>();
+
         String pathToProcessors = "dataset/new-processors.dag";
         ProcessorDAG processorDAG = new ProcessorDAG(pathToProcessors);
 
@@ -29,8 +30,18 @@ public class MainHybridEDFMultiple extends JFrame {
 
         // initialize a list of DAGs
         for (int dagIndex = 1; dagIndex <= noOfDAGsToTest; dagIndex++) {
+            // move all the temporarily removed tasks back to the queue
+            while (listOfTempRemovedTasks.size() > 0) {
+                queueOfTasks.add(listOfTempRemovedTasks.removeLast());
+            }
+//            for (int i = 0; i < listOfTempRemovedTasks.size(); i++) {
+//                queueOfTasks.add(listOfTempRemovedTasks.get(i));
+//            }
+
+            // start reading the new DAG
             TaskDAG taskDAG = new TaskDAG(dagIndex, GlobalConfig.DATASET_PATH + dagIndex + ".dag");
             currentTime = taskDAG.getArrivalTime();
+            System.out.println(dagIndex);
 //            System.out.println("current time: " + currentTime);
 
             listOfDags.add(taskDAG);
@@ -91,7 +102,7 @@ public class MainHybridEDFMultiple extends JFrame {
 
             Iterator<Task> iterator = queueOfTasks.iterator();
             while (iterator.hasNext()) {
-                // get rid of all the tasks whose job's deadline are before current time
+                // get rid of all the tasks whose job's65.47 deadline are before current time
                 TaskDAG currentTaskDag = iterator.next().getTaskDAG();
                 if (currentTaskDag.getDeadline() + currentTaskDag.getArrivalTime() < currentTime) {
                     iterator.remove();
@@ -130,13 +141,19 @@ public class MainHybridEDFMultiple extends JFrame {
                         // find the first fit slot on the current processor core for the current task
                         Slot currentSelectedSlot = schedule.getFirstFitSlotForTaskOnProcessorCore(currentProcessorCore, currentTask);
 
-                        if (selectedSlot == null || currentSelectedSlot.getEndTime() < selectedSlot.getEndTime()) {
-                            selectedSlot = currentSelectedSlot;
-                            selectedProcessorCore = currentProcessorCore;
+                        if (currentSelectedSlot != null) {
+                            if (selectedSlot == null || currentSelectedSlot.getEndTime() < selectedSlot.getEndTime()) {
+                                selectedSlot = currentSelectedSlot;
+                                selectedProcessorCore = currentProcessorCore;
+                            }
                         }
                     }
 
-                    schedule.addNewSlot(selectedProcessorCore, currentTask, selectedSlot.getStartTime());
+                    if (selectedSlot == null) {
+                        listOfTempRemovedTasks.add(currentTask);
+                    } else {
+                        schedule.addNewSlot(selectedProcessorCore, currentTask, selectedSlot.getStartTime());
+                    }
                 }
             }
         }
@@ -150,39 +167,45 @@ public class MainHybridEDFMultiple extends JFrame {
             totalNoOfTasks += currentTaskDag.getTasks().size();
 
             if (currentTaskDag.getTasks().get(currentTaskDag.getTasks().size() - 1).getAllocatedSlot() == null) {
-                int noOfTasksExecuted = 0;
-
-                for (int j = 0; j < currentTaskDag.getTasks().size(); j++) {
-                    if (currentTaskDag.getTasks().get(j).getAllocatedSlot() != null) {
-                        noOfTasksExecuted++;
-                    }
-                }
-
-                System.out.println(String.valueOf(i + 1) + ": Rejected. Arrived at: " + currentTaskDag.getArrivalTime() +
-                        ". No of tasks executed: " + noOfTasksExecuted +
-                        "/" + currentTaskDag.getTasks().size());
+//                int noOfTasksExecuted = 0;
+//
+//                for (int j = 0; j < currentTaskDag.getTasks().size(); j++) {
+//                    if (currentTaskDag.getTasks().get(j).getAllocatedSlot() != null) {
+//                        noOfTasksExecuted++;
+//                    }
+//                }
+//
+//                System.out.println(String.valueOf(i + 1) + ": Rejected. Arrived at: " + currentTaskDag.getArrivalTime() +
+//                        ". No of tasks executed: " + noOfTasksExecuted +
+//                        "/" + currentTaskDag.getTasks().size());
             } else {
-                Slot slotForExitTask = currentTaskDag.getTasks().get(currentTaskDag.getTasks().size() - 1).getAllocatedSlot();
-                double makespan = slotForExitTask.getEndTime() - currentTaskDag.getArrivalTime();
-                System.out.println(String.valueOf(i + 1) + ": Accepted. Arrived at: " +
-                        currentTaskDag.getArrivalTime() + " Makespan: " + makespan +
-                        ", deadline: " + currentTaskDag.getDeadline());
+                noOfAcceptedDags++;
+//                Slot slotForExitTask = currentTaskDag.getTasks().get(currentTaskDag.getTasks().size() - 1).getAllocatedSlot();
+//                double makespan = slotForExitTask.getEndTime() - currentTaskDag.getArrivalTime();
+//                System.out.println(String.valueOf(i + 1) + ": Accepted. Arrived at: " +
+//                        currentTaskDag.getArrivalTime() + " Makespan: " + makespan +
+//                        ", deadline: " + currentTaskDag.getDeadline());
             }
         }
 
-        System.out.println("No of occupied slots: " + schedule.countOccupiedSlotsInNetwork());
-        System.out.println("Total no of tasks: " + totalNoOfTasks);
+//        System.out.println("No of occupied slots: " + schedule.countOccupiedSlotsInNetwork());
+//        System.out.println("Total no of tasks: " + totalNoOfTasks);
+        ScheduleResult scheduleResult = new ScheduleResult(schedule);
+//        scheduleResult.printWithResourceUsage();
+        System.out.println("Guarantee ratio: " + noOfAcceptedDags);
+        System.out.println("Cloud cost: " + scheduleResult.getCloudCost());
+        System.out.println("Percentage of edge occupancy: " + scheduleResult.getPercentageEdgeOccupancy());
 
-        SwingUtilities.invokeLater(() -> {
-            MainHybridEDFMultiple example = new MainHybridEDFMultiple(
-                    "MainHybridEDFMultiple",
-                    "MainHybridEDFMultiple",
-                    schedule);
-            example.setSize(800, 400);
-            example.setLocationRelativeTo(null);
-            example.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            example.setVisible(true);
-        });
+//        SwingUtilities.invokeLater(() -> {
+//            MainHybridEDFMultiple example = new MainHybridEDFMultiple(
+//                    "MainHybridEDFMultiple",
+//                    "MainHybridEDFMultiple",
+//                    schedule);
+//            example.setSize(800, 400);
+//            example.setLocationRelativeTo(null);
+//            example.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+//            example.setVisible(true);
+//        });
     }
 
     public static LinkedList<Task> prioritizeTasks(TaskDAG taskDAG, ProcessorDAG processorDAG) {

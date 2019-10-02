@@ -95,6 +95,7 @@ public class Schedule {
 //    this function calculates the earliest slot that a processor
 //    which will be able to execute a specified task
     public Slot getFirstFitSlotForTaskOnProcessorCore(ProcessorCore processorCore, Task task) {
+        double deadline = task.getTaskDAG().getDeadline() + task.getTaskDAG().getArrivalTime();
 //        the ready time of the task at which
 //        all required input data has arrived at the current processor
         double readyTime = -1;
@@ -109,7 +110,13 @@ public class Schedule {
 //            get processor which processes the current predecessor task
 //            System.out.println("current pred: " + predTask.getId());
 //            ProcessorCore predProcessorCore = this.taskExecutionSlot.get(predTask.getId()).getProcessorCore();
-            ProcessorCore predProcessorCore = predTask.getAllocatedSlot().getProcessorCore();
+            ProcessorCore predProcessorCore;
+
+            if (predTask.getAllocatedSlot() == null) {
+                return null;
+            }
+
+            predProcessorCore = predTask.getAllocatedSlot().getProcessorCore();
 
 //            calculate communication time to transmit data dependency from
 //            processor which is assigned to process the predecessor task to
@@ -125,6 +132,10 @@ public class Schedule {
             if (currentReadyTime > readyTime) {
                 readyTime = currentReadyTime;
             }
+        }
+
+        if (readyTime > deadline) {
+            return null;
         }
 
         double processingTime = task.getComputationRequired() / processorCore.getProcessor().getProcessingRate();
@@ -151,12 +162,16 @@ public class Schedule {
             }
         }
 
-        if (earliestSlot != null) {
-            return earliestSlot;
-        } else {
-            System.out.println("Nothing");
-            return new Slot(task, processorCore, -1, -1);
+        if (earliestSlot.getStartTime() > deadline || earliestSlot.getEndTime() > deadline) {
+            return null;
         }
+
+//        if (earliestSlot != null) {
+            return earliestSlot;
+//        } else {
+//            System.out.println("Nothing");
+//            return new Slot(task, processorCore, Double.MAX_VALUE, Double.MAX_VALUE);
+//        }
     }
 
     public double getComputationCostOfTask(Task task) {
